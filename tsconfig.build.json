@@ -11,8 +11,9 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node", "express", "bcrypt", "jsonwebtoken"]
   },
   "include": ["server/**/*", "shared/**/*"],
-  "exclude": ["node_modules", "client"]
+  "exclude": ["node_modules", "client", "**/*.test.ts"]
 } 
