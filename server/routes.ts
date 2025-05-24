@@ -87,6 +87,11 @@ const isAdmin = (req: AuthRequest, res: Response, next: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok" });
+  });
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {

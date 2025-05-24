@@ -1,8 +1,10 @@
 services:
   - type: web
-    name: trackmaster
+    name: trackmaster-api
     env: node
-    buildCommand: npm install && cd client && npm install && npm run build && cd ..
+    region: ohio
+    plan: free
+    buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -15,5 +17,7 @@ services:
         sync: false
       - key: MAIL_FROM
         sync: false
-    plan: free
-    branch: main 
+      - key: PORT
+        value: 3000
+    healthCheckPath: /api/health
+    autoDeploy: true 

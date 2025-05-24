@@ -2,10 +2,10 @@
   "name": "trackmaster",
   "version": "1.0.0",
   "description": "Task management application",
-  "main": "dist/index.js",
+  "main": "dist/server/index.js",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "tsc && cd client && npm run build",
+    "build": "tsc && cd client && npm install && npm run build",
     "start": "NODE_ENV=production node dist/server/index.js",
     "postinstall": "prisma generate"
   },
