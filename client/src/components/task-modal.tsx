@@ -69,9 +69,12 @@ export function TaskModal({ open, onClose, users }: TaskModalProps) {
     }
 
     const taskData = {
-      ...formData,
+      title: formData.title,
+      description: formData.description || null,
+      priority: formData.priority,
+      status: "TODO" as const,
       assigneeId: formData.assigneeId && formData.assigneeId !== "unassigned" ? parseInt(formData.assigneeId) : null,
-      dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+      dueDate: formData.dueDate ? formData.dueDate : null,
     };
 
     createTaskMutation.mutate(taskData);

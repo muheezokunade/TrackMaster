@@ -145,7 +145,7 @@ export class DatabaseStorage implements IStorage {
     } as TaskWithUsers;
   }
 
-  async createTask(task: InsertTask): Promise<TaskWithUsers> {
+  async createTask(task: any): Promise<TaskWithUsers> {
     const [newTask] = await db
       .insert(tasks)
       .values(task)
@@ -160,9 +160,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTask(id: number, updates: UpdateTask): Promise<TaskWithUsers | undefined> {
+    const updateData = {
+      ...updates,
+      updatedAt: new Date(),
+      dueDate: updates.dueDate ? new Date(updates.dueDate) : updates.dueDate,
+    };
+
     const [updatedTask] = await db
       .update(tasks)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(tasks.id, id))
       .returning();
 

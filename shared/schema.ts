@@ -75,6 +75,8 @@ export const insertTaskSchema = createInsertSchema(tasks).omit({
   createdAt: true,
   updatedAt: true,
   creatorId: true,
+}).extend({
+  dueDate: z.string().nullable().optional(),
 });
 
 export const updateTaskSchema = insertTaskSchema.partial();

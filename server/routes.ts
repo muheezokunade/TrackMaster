@@ -129,15 +129,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tasks", authenticateToken, async (req: any, res) => {
     try {
-      const validatedData = insertTaskSchema.parse(req.body);
+      const { title, description, priority, dueDate, assigneeId } = req.body;
+      
       const taskData = {
-        ...validatedData,
+        title,
+        description: description || null,
+        status: "TODO",
+        priority: priority || "MEDIUM",
+        dueDate: dueDate ? new Date(dueDate) : null,
+        assigneeId: assigneeId || null,
         creatorId: req.user.id,
       };
       
       const task = await storage.createTask(taskData);
       res.status(201).json(task);
     } catch (error: any) {
+      console.error('Task creation error:', error);
       res.status(400).json({ message: error.message });
     }
   });
