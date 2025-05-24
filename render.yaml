@@ -1,17 +1,19 @@
 services:
   - type: web
-    name: trackmaster-api
+    name: trackmaster
     env: node
-    buildCommand: npm install && npx prisma generate && npm run build
+    buildCommand: npm install && cd client && npm install && npm run build && cd ..
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        sync: false # Will be set manually in Render dashboard
-      - key: JWT_SECRET
-        generateValue: true
+        sync: false
       - key: SESSION_SECRET
-        generateValue: true
-      - key: PORT
-        value: 3000 
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+    plan: free
+    branch: main 
