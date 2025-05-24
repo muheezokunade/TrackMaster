@@ -63,7 +63,7 @@ export default function Settings() {
         newPassword: formData.newPassword,
       });
 
-      const data = await response.json();
+      const data = response.data;
       localStorage.setItem("user", JSON.stringify(data.user));
 
       toast({

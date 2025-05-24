@@ -81,7 +81,7 @@ export default function AcceptInvite() {
     setIsLoading(true);
     try {
       const response = await apiRequest("POST", `/api/invitations/accept/${token}`, formData);
-      const data = await response.json();
+      const data = response.data;
 
       // Store authentication data
       localStorage.setItem("token", data.token);

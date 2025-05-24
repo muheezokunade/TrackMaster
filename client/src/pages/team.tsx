@@ -13,11 +13,6 @@ import {
   Sun, 
   Moon,
   Users,
-  Mail,
-  Calendar,
-  CheckSquare,
-  Clock,
-  Award,
   UserPlus,
   Plus
 } from "lucide-react";
@@ -32,16 +27,6 @@ export default function Team() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newUser, setNewUser] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    firstName: "",
-    lastName: "",
-    role: "member"
-  });
   const { user, logout } = useAuth();
   const { tasks } = useTasks();
   const { theme, toggleTheme } = useTheme();
@@ -61,75 +46,6 @@ export default function Team() {
   });
 
   if (!user) return null;
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewUser(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleRoleChange = (value: string) => {
-    setNewUser(prev => ({ ...prev, role: value }));
-  };
-
-  const handleAddMember = async () => {
-    if (
-      !newUser.username ||
-      !newUser.email ||
-      !newUser.password ||
-      !newUser.confirmPassword ||
-      !newUser.firstName ||
-      !newUser.lastName
-    ) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newUser.password !== newUser.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords don't match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await apiRequest("POST", "/api/auth/register", newUser);
-      
-      toast({
-        title: "Success",
-        description: "Team member added successfully",
-      });
-      
-      // Reset form and close dialog
-      setNewUser({
-        username: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        firstName: "",
-        lastName: "",
-        role: "member"
-      });
-      setIsAddingMember(false);
-      
-      // Refresh users list
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add team member",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const getUserStats = (userId: number) => {
     const userTasks = tasks?.filter(task => task.assigneeId === userId || task.creatorId === userId) || [];

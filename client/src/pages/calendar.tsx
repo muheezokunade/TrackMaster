@@ -3,7 +3,6 @@ import { Sidebar } from "@/components/sidebar";
 import { TaskModal } from "@/components/task-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useTasks } from "@/hooks/use-tasks";
 import { useQuery } from "@tanstack/react-query";
@@ -23,7 +22,7 @@ export default function Calendar() {
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const { user, logout } = useAuth();
-  const { tasks, isLoading: tasksLoading } = useTasks();
+  const { tasks } = useTasks();
   const { theme, toggleTheme } = useTheme();
 
   const { data: users = [] } = useQuery<any[]>({

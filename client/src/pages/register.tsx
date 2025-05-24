@@ -52,7 +52,7 @@ export default function Register() {
     try {
       const response = await apiRequest("POST", "/api/auth/register", formData);
       
-      const data = await response.json();
+      const data = response.data;
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       
@@ -133,7 +133,7 @@ export default function Register() {
 
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Select value={formData.role} onValueChange={(value) => handleChange("role", value as "ADMIN" | "MEMBER")}>
+              <Select value={formData.role} onValueChange={(value: string) => handleChange("role", value as "ADMIN" | "MEMBER")}>
                 <SelectTrigger className="bg-white/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/50">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
