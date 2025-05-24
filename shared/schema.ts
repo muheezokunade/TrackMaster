@@ -1,6 +1,6 @@
 import { pgTable, text, serial, integer, boolean, timestamp, pgEnum } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { createInsertSchema } from "drizzle-zod";
+import { relations, sql } from "drizzle-orm";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "member"]);
@@ -9,165 +9,212 @@ export const taskPriorityEnum = pgEnum("task_priority", ["LOW", "MEDIUM", "HIGH"
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
+  username: text("username").notNull(),
+  email: text("email").notNull(),
   password: text("password").notNull(),
-  role: userRoleEnum("role").notNull().default("member"),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   avatar: text("avatar"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  role: text("role").default("member")
 });
 
 export const invitations = pgTable("invitations", {
   id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  role: userRoleEnum("role").notNull().default("member"),
-  token: text("token").unique(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
+  email: text("email").notNull(),
+  role: text("role").default("member"),
+  teamId: integer("team_id").references(() => teams.id).notNull(),
+  token: text("token"),
+  inviterId: integer("inviter_id").references(() => users.id).notNull(),
   expiresAt: timestamp("expires_at").notNull(),
-  inviterId: integer("inviter_id").notNull().references(() => users.id),
-  teamId: integer("team_id").notNull().references(() => teams.id),
-  accepted: boolean("accepted").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  accepted: boolean("accepted").default(false)
 });
 
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
   title: text("title").notNull(),
   description: text("description"),
-  status: taskStatusEnum("status").notNull().default("TODO"),
-  priority: taskPriorityEnum("priority").notNull().default("MEDIUM"),
+  status: text("status").default("TODO"),
+  priority: text("priority").default("MEDIUM"),
   dueDate: timestamp("due_date"),
-  assigneeId: integer("assignee_id"),
-  creatorId: integer("creator_id").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  assigneeId: integer("assignee_id").references(() => users.id),
+  creatorId: integer("creator_id").references(() => users.id).notNull()
 });
 
 export const teams = pgTable("teams", {
   id: serial("id").primaryKey(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
   name: text("name").notNull(),
-  createdById: integer("created_by_id").notNull().references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  ownerId: integer("owner_id").references(() => users.id).notNull()
 });
 
 export const teamMembers = pgTable("team_members", {
   id: serial("id").primaryKey(),
-  teamId: integer("team_id").notNull().references(() => teams.id),
-  userId: integer("user_id").notNull().references(() => users.id),
-  role: userRoleEnum("role").notNull().default("member"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp("updated_at").default(sql`CURRENT_TIMESTAMP`),
+  teamId: integer("team_id").references(() => teams.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  role: text("role").default("member")
 });
 
 export const teamsRelations = relations(teams, ({ one, many }) => ({
-  creator: one(users, {
-    fields: [teams.createdById],
-    references: [users.id],
+  owner: one(users, {
+    fields: [teams.ownerId],
+    references: [users.id]
   }),
   members: many(teamMembers),
+  invitations: many(invitations)
 }));
 
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
   team: one(teams, {
     fields: [teamMembers.teamId],
-    references: [teams.id],
+    references: [teams.id]
   }),
   user: one(users, {
     fields: [teamMembers.userId],
-    references: [users.id],
-  }),
+    references: [users.id]
+  })
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
-  createdTasks: many(tasks, { relationName: "creator" }),
-  assignedTasks: many(tasks, { relationName: "assignee" }),
-  sentInvitations: many(invitations, { relationName: "inviter" }),
-  teams: many(teamMembers),
-}));
-
-export const invitationsRelations = relations(invitations, ({ one }) => ({
-  inviter: one(users, {
-    fields: [invitations.inviterId],
-    references: [users.id],
-    relationName: "inviter",
-  }),
+  ownedTeams: many(teams),
+  teamMembers: many(teamMembers),
+  tasksCreated: many(tasks, { relationName: "creator" }),
+  tasksAssigned: many(tasks, { relationName: "assignee" }),
+  invitationsSent: many(invitations)
 }));
 
 export const tasksRelations = relations(tasks, ({ one }) => ({
   creator: one(users, {
     fields: [tasks.creatorId],
-    references: [users.id],
-    relationName: "creator",
+    references: [users.id]
   }),
   assignee: one(users, {
     fields: [tasks.assigneeId],
-    references: [users.id],
-    relationName: "assignee",
-  }),
+    references: [users.id]
+  })
 }));
 
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const invitationsRelations = relations(invitations, ({ one }) => ({
+  team: one(teams, {
+    fields: [invitations.teamId],
+    references: [teams.id]
+  }),
+  inviter: one(users, {
+    fields: [invitations.inviterId],
+    references: [users.id]
+  })
+}));
+
+export const insertUserSchema = z.object({
+  email: z.string().email(),
+  firstName: z.string(),
+  lastName: z.string(),
+  password: z.string(),
+  role: z.enum(["admin", "member"]).optional(),
+  username: z.string(),
+  avatar: z.string().optional()
 });
 
-export const insertInvitationSchema = createInsertSchema(invitations).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
+export const insertTaskSchema = z.object({
+  title: z.string(),
+  description: z.string().optional(),
+  status: z.enum(["TODO", "IN_PROGRESS", "DONE"]).optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
+  dueDate: z.string().nullable().optional(),
+  assigneeId: z.string().nullable().optional()
 });
 
-export const updateInvitationSchema = createInsertSchema(invitations).partial().omit({
-  id: true,
-  email: true,
-  inviterId: true,
-  createdAt: true,
-  updatedAt: true,
+export const updateTaskSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  status: z.enum(["TODO", "IN_PROGRESS", "DONE"]).optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
+  dueDate: z.string().nullable().optional(),
+  assigneeId: z.string().nullable().optional()
+});
+
+export const insertTeamSchema = z.object({
+  name: z.string(),
+  ownerId: z.string()
+});
+
+export const insertInvitationSchema = z.object({
+  email: z.string().email(),
+  role: z.enum(["admin", "member"]).optional(),
+  teamId: z.number(),
+  token: z.string().nullable().optional(),
+  inviterId: z.number(),
+  expiresAt: z.date(),
+  accepted: z.boolean().optional()
+});
+
+export const updateInvitationSchema = z.object({
+  role: z.enum(["admin", "member"]).optional().optional(),
+  teamId: z.number().optional(),
+  token: z.string().nullable().optional().optional(),
+  expiresAt: z.date().optional(),
+  accepted: z.boolean().optional()
 });
 
 export const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(6)
 });
 
 export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   confirmPassword: z.string().min(6),
-  name: z.string().optional(),
-  role: z.enum(['ADMIN', 'MEMBER']).default('MEMBER')
+  username: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  role: z.enum(["ADMIN", "MEMBER"]).default("MEMBER")
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ["confirmPassword"],
+  path: ["confirmPassword"]
 });
 
-export const insertTaskSchema = createInsertSchema(tasks).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  creatorId: true,
-}).extend({
-  dueDate: z.string().nullable().optional(),
-});
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  avatar?: string;
+  memberships?: Array<{
+    teamId: string;
+    role: string;
+  }>;
+}
 
-export const updateTaskSchema = insertTaskSchema.partial();
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
 export type LoginData = z.infer<typeof loginSchema>;
 export type RegisterData = z.infer<typeof registerSchema>;
+
+export type Task = {
+  id: number;
+  createdAt: Date;
+  updatedAt: Date;
+  title: string;
+  description: string | null;
+  status: "TODO" | "IN_PROGRESS" | "DONE";
+  priority: "LOW" | "MEDIUM" | "HIGH";
+  dueDate: Date | null;
+  assigneeId: number | null;
+  creatorId: number;
+};
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type UpdateTask = z.infer<typeof updateTaskSchema>;
-export type Task = typeof tasks.$inferSelect;
-export type TaskWithUsers = Task & {
-  creator: User;
-  assignee?: User | null;
-};
-export type Invitation = typeof invitations.$inferSelect;
 export type InsertInvitation = z.infer<typeof insertInvitationSchema>;
 export type UpdateInvitation = z.infer<typeof updateInvitationSchema>;

@@ -5,13 +5,23 @@ import crypto from 'crypto';
 
 type Role = 'ADMIN' | 'MEMBER';
 
+interface Membership {
+  teamId: string;
+  role: Role;
+}
+
 interface User {
   id: string;
   email: string;
+  username?: string;
+  firstName?: string | null;
+  lastName?: string | null;
   name?: string | null;
-  password: string;
   role: Role;
-  createdAt: Date;
+  avatar?: string | null;
+  password: string;
+  memberships?: Membership[];
+  createdAt?: Date;
 }
 
 interface Team {
@@ -19,13 +29,6 @@ interface Team {
   name: string;
   ownerId: string;
   createdAt: Date;
-}
-
-interface Membership {
-  id: string;
-  userId: string;
-  teamId: string;
-  role: Role;
 }
 
 export class Storage {

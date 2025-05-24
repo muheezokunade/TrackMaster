@@ -1,58 +1,52 @@
 import express, { Express, Request, Response } from "express";
 import { createServer, Server } from "http";
+import { PrismaClient, Task as PrismaTask } from "@prisma/client";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Storage } from "./storage";
-import { registerSchema, loginSchema, insertTaskSchema, updateTaskSchema } from "../shared/schema";
+import { insertTaskSchema, updateTaskSchema, insertTeamSchema, loginSchema, registerSchema } from "../shared/schema";
 import crypto from "crypto";
 import { Resend } from 'resend';
-import { PrismaClient, Prisma } from '@prisma/client';
 
 type Role = 'ADMIN' | 'MEMBER';
 
-interface User {
-  id: string;
-  email: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  name?: string | null;
-  password: string;
-  role: Role;
-  createdAt: Date;
-}
-
 interface Membership {
-  id: string;
-  userId: string;
   teamId: string;
   role: Role;
 }
 
-interface UserWithMemberships extends User {
+interface StorageUser {
+  id: string;
+  email: string;
+  role: Role;
+  password: string;
   memberships: Membership[];
 }
 
-interface AuthRequest extends Request {
-  user?: UserWithMemberships;
+interface User {
+  id: string;
+  email: string;
+  username?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  name?: string | null;
+  role: Role;
+  avatar?: string | null;
+  password: string;
+  memberships?: Membership[];
+  createdAt?: Date;
 }
 
-interface Task {
-  id: number;
-  title: string;
-  description: string | null;
-  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-  dueDate: Date | null;
-  assigneeId: number | null;
-  creatorId: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+type Task = PrismaTask;
 
 const storage = new Storage();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const resend = new Resend('re_fdRLUHFW_7fJVwdHG7HRWhGtjxofro3Kr');
 const prisma = new PrismaClient();
+
+interface AuthRequest extends Request {
+  user?: User;
+}
 
 const authenticateToken = async (req: AuthRequest, res: Response, next: any) => {
   const authHeader = req.headers["authorization"];
@@ -104,25 +98,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { confirmPassword, ...userData } = validatedData;
-      const user = await storage.createUser(userData);
+      const storageUser = await storage.createUser(userData);
       
-      if (!user) {
+      if (!storageUser) {
         return res.status(500).json({ message: "Failed to create user" });
       }
 
       // Create a new team for the user
-      const team = await storage.createTeam({
-        name: `${user.name || 'My'} Team`,
-        ownerId: user.id
+      const team = await prisma.team.create({
+        data: {
+          name: `${storageUser.email.split('@')[0]}'s Team`,
+          owner: {
+            connect: { id: storageUser.id }
+          },
+          members: {
+            create: {
+              userId: storageUser.id,
+              role: 'ADMIN'
+            }
+          }
+        },
+        include: {
+          members: true
+        }
       });
       
       if (!team) {
         return res.status(500).json({ message: "Failed to create team" });
       }
 
-      // No need to create membership separately as it's created with the team
-      const userWithMemberships: UserWithMemberships = {
-        ...user,
+      const user: User = {
+        ...storageUser,
+        username: storageUser.email.split('@')[0],
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
         memberships: team.members
       };
 
@@ -132,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { expiresIn: '24h' }
       );
 
-      const { password, ...userWithoutPassword } = userWithMemberships;
+      const { password, ...userWithoutPassword } = user;
       res.status(201).json({ user: userWithoutPassword, token });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
@@ -270,6 +279,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const team = await prisma.team.create({
         data: {
           name,
+          owner: {
+            connect: { id: user.id }
+          },
           members: {
             create: {
               userId: user.id,
@@ -337,7 +349,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user!;
       
       // Check if user has admin role in any team
-      const adminMembership = user.memberships.find((m: { role: Role }) => m.role === 'ADMIN');
+      const memberships = user.memberships || [];
+      const adminMembership = memberships.find(m => m.role === 'ADMIN');
       if (!adminMembership) {
         return res.status(403).json({ message: "Only team admins can send invitations" });
       }
@@ -552,14 +565,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tasks/stats", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const user = req.user!;
-      const userId = parseInt(user.id);
       
       // Get all tasks for the user's teams
       const tasks = await prisma.task.findMany({
         where: {
           OR: [
-            { assigneeId: userId },
-            { creatorId: userId }
+            { assigneeId: user.id },
+            { creatorId: user.id }
           ]
         }
       });
@@ -567,17 +579,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate stats
       const stats = {
         total: tasks.length,
-        todo: tasks.filter((task: Task) => task.status === 'TODO').length,
-        inProgress: tasks.filter((task: Task) => task.status === 'IN_PROGRESS').length,
-        completed: tasks.filter((task: Task) => task.status === 'DONE').length,
-        overdue: tasks.filter((task: Task) => {
+        todo: tasks.filter(task => task.status === 'TODO').length,
+        inProgress: tasks.filter(task => task.status === 'IN_PROGRESS').length,
+        completed: tasks.filter(task => task.status === 'DONE').length,
+        overdue: tasks.filter(task => {
           if (!task.dueDate || task.status === 'DONE') return false;
           return new Date(task.dueDate) < new Date();
         }).length,
-        assignedToMe: tasks.filter((task: Task) => task.assigneeId === userId).length,
-        createdByMe: tasks.filter((task: Task) => task.creatorId === userId).length,
+        assignedToMe: tasks.filter(task => task.assigneeId === user.id).length,
+        createdByMe: tasks.filter(task => task.creatorId === user.id).length,
         completionRate: tasks.length > 0 
-          ? Math.round((tasks.filter((task: Task) => task.status === 'DONE').length / tasks.length) * 100)
+          ? Math.round((tasks.filter(task => task.status === 'DONE').length / tasks.length) * 100)
           : 0
       };
 
@@ -594,7 +606,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user!;
       
       // Check if user has admin role in any team
-      const adminMembership = user.memberships.find(m => m.role === 'ADMIN');
+      const memberships = user.memberships || [];
+      const adminMembership = memberships.find(m => m.role === 'ADMIN');
       if (!adminMembership) {
         return res.status(403).json({ message: "Only team admins can send invitations" });
       }
@@ -658,7 +671,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.user!;
       
       // Check if user has admin role in any team
-      const adminMembership = user.memberships.find(m => m.role === 'ADMIN');
+      const memberships = user.memberships || [];
+      const adminMembership = memberships.find(m => m.role === 'ADMIN');
       if (!adminMembership) {
         return res.status(403).json({ message: "Only team admins can view invitations" });
       }

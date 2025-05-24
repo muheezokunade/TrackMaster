@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "CommonJS",
-    "lib": ["ES2020"],
+    "lib": ["ES2020", "DOM"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -10,7 +10,10 @@
     "outDir": "dist",
     "rootDir": ".",
     "moduleResolution": "node",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node", "express", "bcrypt", "jsonwebtoken"],
+    "noEmit": true
   },
   "include": ["server/**/*", "shared/**/*"],
   "exclude": ["node_modules", "client"]

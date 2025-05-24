@@ -1,21 +1,12 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
-import { fileURLToPath } from "url";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(new URL(import.meta.url));
 const __dirname = path.dirname(__filename);
 
-const plugins = [react(), runtimeErrorOverlay()];
-
-if (process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined) {
-  import("@replit/vite-plugin-cartographer")
-    .then(({ cartographer }) => {
-      plugins.push(cartographer());
-    })
-    .catch(console.error);
-}
+const plugins = [react()];
 
 export default defineConfig({
   plugins,
@@ -28,23 +19,24 @@ export default defineConfig({
   },
   root: path.resolve(__dirname, "client"),
   build: {
-    outDir: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "dist/public"),
+    outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
   },
   server: {
+    port: 3000,
     proxy: {
       "/api": {
-        target: "http://localhost:3000",
+        target: "http://localhost:3001",
         changeOrigin: true,
         secure: false,
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
+        configure: (proxy: any, _options: any) => {
+          proxy.on('error', (err: Error, _req: any, _res: any) => {
             console.log('proxy error', err);
           });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
+          proxy.on('proxyReq', (proxyReq: any, req: any, _res: any) => {
             console.log('Sending Request to the Target:', req.method, req.url);
           });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
+          proxy.on('proxyRes', (proxyRes: any, req: any, _res: any) => {
             console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
           });
         },
