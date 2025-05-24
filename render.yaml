@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: trackmaster
+    env: node
+    region: ohio
+    plan: free
+    buildCommand: npm install && prisma generate && tsc -p tsconfig.build.json && cd client && npm install && npm run build
+    startCommand: node dist/server/index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20.19.2
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+    healthCheckPath: /api/health 
