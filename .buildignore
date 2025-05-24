@@ -1,0 +1,14 @@
+**/*.go
+go.mod
+go.sum
+*.exe
+*.test
+*.prof
+vendor/
+.git/
+.gitignore
+.env
+.env.*
+node_modules/
+*.log
+.DS_Store 
