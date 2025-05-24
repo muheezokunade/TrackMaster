@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "npx prisma generate && tsc -p tsconfig.build.json && cd client && npm install && npm run build",
+    "build": "npx prisma generate && tsc -p tsconfig.build.json && cd client && npm install && npm run build && cd .. && mkdir -p dist/client && cp -r client/dist/* dist/client/",
     "start": "NODE_ENV=production node dist/server/index.js"
   },
   "dependencies": {
