@@ -3,7 +3,7 @@ import { createServer, Server } from "http";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Storage } from "./storage";
-import { registerSchema, loginSchema, insertTaskSchema, updateTaskSchema } from "@shared/schema";
+import { registerSchema, loginSchema, insertTaskSchema, updateTaskSchema } from "../shared/schema";
 import crypto from "crypto";
 import { Resend } from 'resend';
 import { PrismaClient, Prisma } from '@prisma/client';
@@ -543,45 +543,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Task stats route
   app.get("/api/tasks/stats", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const user = req.user!;
-      type TaskWithStatus = {
-        status: 'TODO' | 'IN_PROGRESS' | 'DONE';
-        priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-        dueDate: Date | null;
-      };
-
+      const userId = parseInt(user.id);
+      
+      // Get all tasks for the user's teams
       const tasks = await prisma.task.findMany({
         where: {
           OR: [
-            { creatorId: user.id },
-            { assigneeId: user.id }
+            { assigneeId: userId },
+            { creatorId: userId }
           ]
-        },
-        select: {
-          status: true,
-          priority: true,
-          dueDate: true
         }
-      }) as TaskWithStatus[];
+      });
 
+      // Calculate stats
       const stats = {
         total: tasks.length,
-        todo: tasks.filter(task => task.status === 'TODO').length,
-        inProgress: tasks.filter(task => task.status === 'IN_PROGRESS').length,
-        done: tasks.filter(task => task.status === 'DONE').length,
-        overdue: tasks.filter(task => 
-          task.dueDate && 
-          task.status !== 'DONE' && 
-          new Date(task.dueDate) < new Date()
-        ).length,
-        priority: {
-          low: tasks.filter(task => task.priority === 'LOW').length,
-          medium: tasks.filter(task => task.priority === 'MEDIUM').length,
-          high: tasks.filter(task => task.priority === 'HIGH').length,
-          critical: tasks.filter(task => task.priority === 'CRITICAL').length
-        }
+        todo: tasks.filter((task: Task) => task.status === 'TODO').length,
+        inProgress: tasks.filter((task: Task) => task.status === 'IN_PROGRESS').length,
+        completed: tasks.filter((task: Task) => task.status === 'DONE').length,
+        overdue: tasks.filter((task: Task) => {
+          if (!task.dueDate || task.status === 'DONE') return false;
+          return new Date(task.dueDate) < new Date();
+        }).length,
+        assignedToMe: tasks.filter((task: Task) => task.assigneeId === userId).length,
+        createdByMe: tasks.filter((task: Task) => task.creatorId === userId).length,
+        completionRate: tasks.length > 0 
+          ? Math.round((tasks.filter((task: Task) => task.status === 'DONE').length / tasks.length) * 100)
+          : 0
       };
 
       res.json(stats);
