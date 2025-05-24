@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TaskCard } from "./task-card";
 import { Plus, Filter } from "lucide-react";
 import type { TaskWithUsers } from "@shared/schema";
@@ -13,10 +14,21 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ tasks, isLoading }: KanbanBoardProps) {
   const [draggedTask, setDraggedTask] = useState<TaskWithUsers | null>(null);
+  const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [filterAssignee, setFilterAssignee] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
 
-  const todoTasks = tasks.filter(task => task.status === 'TODO');
-  const inProgressTasks = tasks.filter(task => task.status === 'IN_PROGRESS');
-  const doneTasks = tasks.filter(task => task.status === 'DONE');
+  // Filter tasks based on selected filters
+  const filteredTasks = tasks.filter(task => {
+    const priorityMatch = filterPriority === "all" || task.priority === filterPriority;
+    const assigneeMatch = filterAssignee === "all" || 
+      (filterAssignee === "unassigned" ? !task.assigneeId : task.assigneeId?.toString() === filterAssignee);
+    return priorityMatch && assigneeMatch;
+  });
+
+  const todoTasks = filteredTasks.filter(task => task.status === 'TODO');
+  const inProgressTasks = filteredTasks.filter(task => task.status === 'IN_PROGRESS');
+  const doneTasks = filteredTasks.filter(task => task.status === 'DONE');
 
   const columns = [
     {
@@ -109,11 +121,60 @@ export function KanbanBoard({ tasks, isLoading }: KanbanBoardProps) {
               <Plus className="w-4 h-4 mr-2" />
               Add Task
             </Button>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+            >
               <Filter className="w-4 h-4" />
             </Button>
           </div>
         </div>
+        
+        {/* Filter Controls */}
+        {showFilters && (
+          <div className="flex flex-wrap gap-4 mt-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Priority:</label>
+              <Select value={filterPriority} onValueChange={setFilterPriority}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="LOW">Low</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                  <SelectItem value="CRITICAL">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Assignee:</label>
+              <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => {
+                setFilterPriority("all");
+                setFilterAssignee("all");
+              }}
+            >
+              Clear Filters
+            </Button>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
