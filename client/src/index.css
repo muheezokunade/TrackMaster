@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 11% 98%; /* #F5F7FA */
+  --foreground: 210 11% 15%; /* #1E293B */
+  --muted: 210 11% 93%; /* #E2E8F0 */
+  --muted-foreground: 210 6% 46%; /* #64748B */
+  --popover: 210 11% 98%; /* #F5F7FA */
+  --popover-foreground: 210 11% 15%; /* #1E293B */
+  --card: 0 0% 100%; /* #FFFFFF */
+  --card-foreground: 210 11% 15%; /* #1E293B */
+  --border: 210 11% 87%; /* #CBD5E1 */
+  --input: 210 11% 87%; /* #CBD5E1 */
+  --primary: 239 84% 67%; /* #6366F1 */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF */
+  --secondary: 262 83% 71%; /* #8B5CF6 */
+  --secondary-foreground: 0 0% 100%; /* #FFFFFF */
+  --accent: 210 11% 93%; /* #E2E8F0 */
+  --accent-foreground: 210 11% 15%; /* #1E293B */
+  --destructive: 0 84% 60%; /* #EF4444 */
+  --destructive-foreground: 0 0% 100%; /* #FFFFFF */
+  --ring: 239 84% 67%; /* #6366F1 */
+  --radius: 1rem;
+  
+  /* Custom colors for task priorities */
+  --critical: 0 84% 60%; /* #EF4444 */
+  --high: 25 95% 53%; /* #F97316 */
+  --medium: 45 93% 47%; /* #EAB308 */
+  --low: 142 76% 36%; /* #22C55E */
+  
+  /* Sidebar colors */
+  --sidebar-background: 0 0% 100%; /* #FFFFFF */
+  --sidebar-foreground: 210 11% 15%; /* #1E293B */
+  --sidebar-primary: 239 84% 67%; /* #6366F1 */
+  --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF */
+  --sidebar-accent: 210 11% 93%; /* #E2E8F0 */
+  --sidebar-accent-foreground: 210 11% 15%; /* #1E293B */
+  --sidebar-border: 210 11% 87%; /* #CBD5E1 */
+  --sidebar-ring: 239 84% 67%; /* #6366F1 */
+}
+
+.dark {
+  --background: 222 84% 5%; /* #0F172A */
+  --foreground: 210 40% 98%; /* #F8FAFC */
+  --muted: 217 33% 17%; /* #1E293B */
+  --muted-foreground: 215 16% 65%; /* #94A3B8 */
+  --popover: 222 84% 5%; /* #0F172A */
+  --popover-foreground: 210 40% 98%; /* #F8FAFC */
+  --card: 222 84% 5%; /* #0F172A */
+  --card-foreground: 210 40% 98%; /* #F8FAFC */
+  --border: 217 33% 17%; /* #1E293B */
+  --input: 217 33% 17%; /* #1E293B */
+  --primary: 239 84% 67%; /* #6366F1 */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF */
+  --secondary: 262 83% 71%; /* #8B5CF6 */
+  --secondary-foreground: 0 0% 100%; /* #FFFFFF */
+  --accent: 217 33% 17%; /* #1E293B */
+  --accent-foreground: 210 40% 98%; /* #F8FAFC */
+  --destructive: 0 63% 31%; /* #DC2626 */
+  --destructive-foreground: 210 40% 98%; /* #F8FAFC */
+  --ring: 239 84% 67%; /* #6366F1 */
+  
+  /* Sidebar colors for dark mode */
+  --sidebar-background: 222 84% 5%; /* #0F172A */
+  --sidebar-foreground: 210 40% 98%; /* #F8FAFC */
+  --sidebar-primary: 239 84% 67%; /* #6366F1 */
+  --sidebar-primary-foreground: 0 0% 100%; /* #FFFFFF */
+  --sidebar-accent: 217 33% 17%; /* #1E293B */
+  --sidebar-accent-foreground: 210 40% 98%; /* #F8FAFC */
+  --sidebar-border: 217 33% 17%; /* #1E293B */
+  --sidebar-ring: 239 84% 67%; /* #6366F1 */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    min-height: 100vh;
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(210 40% 95%) 50%, hsl(239 40% 95%) 100%);
+  }
+
+  .dark body {
+    background: linear-gradient(135deg, hsl(var(--background)) 0%, hsl(262 20% 10%) 50%, hsl(239 20% 15%) 100%);
+  }
+}
+
+@layer components {
+  .glassmorphism {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50;
+  }
+  
+  .priority-critical {
+    @apply border-l-4 border-l-red-500 bg-red-50 dark:bg-red-950/20;
+  }
+  
+  .priority-high {
+    @apply border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-950/20;
+  }
+  
+  .priority-medium {
+    @apply border-l-4 border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/20;
+  }
+  
+  .priority-low {
+    @apply border-l-4 border-l-green-500 bg-green-50 dark:bg-green-950/20;
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes slideUp {
+    0% {
+      transform: translateY(20px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+}
