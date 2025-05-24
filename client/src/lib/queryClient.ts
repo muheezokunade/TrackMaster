@@ -1,8 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.PROD ? 'https://trackmaster-api.onrender.com' : 'http://localhost:3000');
+const BASE_URL = import.meta.env.VITE_API_URL || "https://trackmaster-cb3k.onrender.com";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -12,22 +11,22 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export const apiRequest = async (method: string, endpoint: string, data?: any) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   
   try {
     const response = await axios({
       method,
-      url: `${API_URL}${endpoint}`,
+      url: `${BASE_URL}${endpoint}`,
       data,
       headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` })
-      }
+        Authorization: token ? `Bearer ${token}` : "",
+      },
     });
+    
     return response;
   } catch (error: any) {
-    if (error.response) {
-      throw new Error(error.response.data.message || 'An error occurred');
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
     }
     throw error;
   }
