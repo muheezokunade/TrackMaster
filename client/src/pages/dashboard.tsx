@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { KanbanBoard } from "@/components/kanban-board";
 import { TaskModal } from "@/components/task-modal";
@@ -33,12 +33,19 @@ export default function Dashboard() {
   const { tasks, isLoading: tasksLoading } = useTasks();
   const { theme, toggleTheme } = useTheme();
 
+  // Listen for task modal events from kanban board
+  useEffect(() => {
+    const handleOpenTaskModal = () => setTaskModalOpen(true);
+    window.addEventListener('openTaskModal', handleOpenTaskModal);
+    return () => window.removeEventListener('openTaskModal', handleOpenTaskModal);
+  }, []);
+
   const { data: stats } = useQuery({
     queryKey: ["/api/tasks/stats"],
     enabled: !!user,
   });
 
-  const { data: users = [] } = useQuery({
+  const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/users"],
     enabled: !!user,
   });

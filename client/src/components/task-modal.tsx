@@ -70,7 +70,7 @@ export function TaskModal({ open, onClose, users }: TaskModalProps) {
 
     const taskData = {
       ...formData,
-      assigneeId: formData.assigneeId ? parseInt(formData.assigneeId) : null,
+      assigneeId: formData.assigneeId && formData.assigneeId !== "unassigned" ? parseInt(formData.assigneeId) : null,
       dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
     };
 
@@ -172,8 +172,8 @@ export function TaskModal({ open, onClose, users }: TaskModalProps) {
                 <SelectValue placeholder="Select assignee" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Unassigned</SelectItem>
-                <SelectItem value={user?.id?.toString() || ""}>{user?.firstName} {user?.lastName} (Me)</SelectItem>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+                <SelectItem value={user?.id?.toString() || "self"}>{user?.firstName} {user?.lastName} (Me)</SelectItem>
                 {users.filter(u => u.id !== user?.id).map((u) => (
                   <SelectItem key={u.id} value={u.id.toString()}>
                     {u.firstName} {u.lastName}

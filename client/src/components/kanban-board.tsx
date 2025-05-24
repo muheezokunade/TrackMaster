@@ -97,7 +97,15 @@ export function KanbanBoard({ tasks, isLoading }: KanbanBoardProps) {
             Task Board
           </CardTitle>
           <div className="flex space-x-2">
-            <Button size="sm" className="bg-gradient-to-r from-primary to-secondary">
+            <Button 
+              size="sm" 
+              className="bg-gradient-to-r from-primary to-secondary"
+              onClick={() => {
+                // Trigger the task modal from parent component
+                const event = new CustomEvent('openTaskModal');
+                window.dispatchEvent(event);
+              }}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Task
             </Button>
