@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
+import Tasks from "@/pages/tasks";
 import NotFound from "@/pages/not-found";
 
 function AuthenticatedApp() {
@@ -15,6 +16,10 @@ function AuthenticatedApp() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/tasks" component={Tasks} />
+      <Route path="/kanban" component={Dashboard} />
+      <Route path="/calendar" component={Dashboard} />
+      <Route path="/team" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
   );
