@@ -63,7 +63,7 @@ export const teamMembers = pgTable("team_members", {
   role: text("role").default("member")
 });
 
-export const teamsRelations = relations(teams, ({ one, many }) => ({
+export const teamsRelations = relations(teams, ({ one, many }: { one: any, many: any }) => ({
   owner: one(users, {
     fields: [teams.ownerId],
     references: [users.id]
@@ -72,7 +72,7 @@ export const teamsRelations = relations(teams, ({ one, many }) => ({
   invitations: many(invitations)
 }));
 
-export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+export const teamMembersRelations = relations(teamMembers, ({ one }: { one: any }) => ({
   team: one(teams, {
     fields: [teamMembers.teamId],
     references: [teams.id]
@@ -83,7 +83,7 @@ export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
   })
 }));
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many }: { many: any }) => ({
   ownedTeams: many(teams),
   teamMembers: many(teamMembers),
   tasksCreated: many(tasks, { relationName: "creator" }),
@@ -91,7 +91,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   invitationsSent: many(invitations)
 }));
 
-export const tasksRelations = relations(tasks, ({ one }) => ({
+export const tasksRelations = relations(tasks, ({ one }: { one: any }) => ({
   creator: one(users, {
     fields: [tasks.creatorId],
     references: [users.id]
@@ -102,7 +102,7 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
   })
 }));
 
-export const invitationsRelations = relations(invitations, ({ one }) => ({
+export const invitationsRelations = relations(invitations, ({ one }: { one: any }) => ({
   team: one(teams, {
     fields: [invitations.teamId],
     references: [teams.id]
@@ -177,7 +177,7 @@ export const registerSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   role: z.enum(["ADMIN", "MEMBER"]).default("MEMBER")
-}).refine((data) => data.password === data.confirmPassword, {
+}).refine((data: any) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"]
 });

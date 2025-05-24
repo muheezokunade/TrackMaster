@@ -25,14 +25,13 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20.17.50",
     "typescript": "^5.3.3",
-    "prisma": "^5.10.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.5.0",
+    "prisma": "^5.10.0",
     "drizzle-orm": "^0.43.1",
     "drizzle-zod": "^0.8.2",
-    "tsx": "^4.7.1",
     "vite": "^6.3.5",
-    "zod": "^3.25.28"
-  }
+    "zod": "^3.25.28",
+    "@vitejs/plugin-react": "^4.5.0",
+    "tsx": "^4.7.1"
+  },
+  "devDependencies": {}
 }

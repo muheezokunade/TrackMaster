@@ -3,8 +3,8 @@ import { createServer, Server } from "http";
 import { PrismaClient, Task as PrismaTask } from "@prisma/client";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { Storage } from "./storage";
-import { insertTaskSchema, updateTaskSchema, insertTeamSchema, loginSchema, registerSchema } from "../shared/schema";
+import { Storage } from "./storage.js";
+import { insertTaskSchema, updateTaskSchema, insertTeamSchema, loginSchema, registerSchema } from "../shared/schema.js";
 import crypto from "crypto";
 import { Resend } from 'resend';
 
