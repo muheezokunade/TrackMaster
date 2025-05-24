@@ -26,7 +26,7 @@ export function KanbanBoard({ tasks, isLoading }: KanbanBoardProps) {
   const updateTaskMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
       const response = await apiRequest("PATCH", `/api/tasks/${id}`, { status });
-      return response.json();
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });

@@ -21,7 +21,6 @@ import { InviteMemberModal } from "@/components/invite-member-modal";
 import { TaskModal } from "@/components/task-modal";
 import { PendingInvitations } from "@/components/pending-invitations";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 
 export default function Team() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -47,7 +46,7 @@ export default function Team() {
 
   if (!user) return null;
 
-  const getUserStats = (userId: number) => {
+  const getUserStats = (userId: string) => {
     const userTasks = tasks?.filter(task => task.assigneeId === userId || task.creatorId === userId) || [];
     const assignedTasks = tasks?.filter(task => task.assigneeId === userId) || [];
     const createdTasks = tasks?.filter(task => task.creatorId === userId) || [];

@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar } from "lucide-react";
 import type { TaskWithUsers } from "@shared/schema";
 
 interface TaskCardProps {

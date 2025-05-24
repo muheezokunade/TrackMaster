@@ -20,6 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Copy, Send } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface InviteMemberModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export function InviteMemberModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,12 +59,7 @@ export function InviteMemberModal({
         role,
       });
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to send invitation");
-      }
-      
-      const data = await response.json();
+      const data = response.data;
       setInviteLink(`${window.location.origin}${data.inviteLink}`);
       
       toast({
@@ -71,6 +68,7 @@ export function InviteMemberModal({
       });
       
       onInviteSent();
+      queryClient.invalidateQueries({ queryKey: ["/api/team/invitations"] });
     } catch (error: any) {
       toast({
         title: "Error",

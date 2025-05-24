@@ -32,7 +32,7 @@ export function TaskModal({ open, onClose, users }: TaskModalProps) {
   const createTaskMutation = useMutation({
     mutationFn: async (data: any) => {
       const response = await apiRequest("POST", "/api/tasks", data);
-      return response.json();
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
@@ -143,7 +143,7 @@ export function TaskModal({ open, onClose, users }: TaskModalProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
-              <Select value={formData.priority} onValueChange={(value) => handleChange("priority", value)}>
+              <Select value={formData.priority} onValueChange={(value: string) => handleChange("priority", value)}>
                 <SelectTrigger className="bg-white/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/50">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
@@ -170,7 +170,7 @@ export function TaskModal({ open, onClose, users }: TaskModalProps) {
 
           <div className="space-y-2">
             <Label htmlFor="assignee">Assign to</Label>
-            <Select value={formData.assigneeId} onValueChange={(value) => handleChange("assigneeId", value)}>
+            <Select value={formData.assigneeId} onValueChange={(value: string) => handleChange("assigneeId", value)}>
               <SelectTrigger className="bg-white/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/50">
                 <SelectValue placeholder="Select assignee" />
               </SelectTrigger>
