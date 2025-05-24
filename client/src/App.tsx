@@ -9,6 +9,9 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
 import Tasks from "@/pages/tasks";
+import Kanban from "@/pages/kanban";
+import Calendar from "@/pages/calendar";
+import Team from "@/pages/team";
 import NotFound from "@/pages/not-found";
 
 function AuthenticatedApp() {
@@ -17,9 +20,9 @@ function AuthenticatedApp() {
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/tasks" component={Tasks} />
-      <Route path="/kanban" component={Dashboard} />
-      <Route path="/calendar" component={Dashboard} />
-      <Route path="/team" component={Dashboard} />
+      <Route path="/kanban" component={Kanban} />
+      <Route path="/calendar" component={Calendar} />
+      <Route path="/team" component={Team} />
       <Route component={NotFound} />
     </Switch>
   );
