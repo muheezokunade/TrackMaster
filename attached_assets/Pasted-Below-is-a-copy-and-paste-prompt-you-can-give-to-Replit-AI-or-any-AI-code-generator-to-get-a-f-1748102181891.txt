@@ -1,0 +1,145 @@
+Below is a **copy-and-paste prompt** you can give to Replit AI (or any AI-code generator) to get a fully-working, online-hosted TODO application named **“Innofy AI.”**
+Feel free to tweak stack choices or wording, but keep the structure so the generator has all it needs.
+
+---
+
+### 🔧 Prompt Starts Here
+
+> **Project Title:** Innofy AI – A Delightfully Powerful TODO App
+> **Goal:** Generate *all* code, configuration, and deployment steps required to launch a production-ready, full-stack web application on Replit (or any cloud host).
+> **Essence:** A visually striking, responsive task-management app with robust backend logic, real-time updates, and a sprinkle of “wow.”
+
+---
+
+#### 1. Core Requirements
+
+| Area                                            | Must-Have                                          | Nice-to-Have (stretch) |
+| ----------------------------------------------- | -------------------------------------------------- | ---------------------- |
+| **Backend**                                     | • RESTful API or GraphQL                           |                        |
+| • Persistent DB (PostgreSQL or MongoDB)         |                                                    |                        |
+| • User auth – JWT or session cookies            |                                                    |                        |
+| • CRUD for tasks, users, tags                   | • Real-time websockets for live updates            |                        |
+| **Task Features**                               | • Title, description, due date                     |                        |
+| • **Priority (Low → Critical)**                 |                                                    |                        |
+| • **Color-coding** by priority                  |                                                    |                        |
+| • **User assignment** (self or others)          |                                                    |                        |
+| • Status: *Todo / In-Progress / Done*           | • Sub-tasks, file attachments, recurring tasks     |                        |
+| **UI/UX**                                       | • Mobile-first responsive layout                   |                        |
+| • Vibrant theme with subtle glassmorphism       |                                                    |                        |
+| • Kanban board **and** list view                |                                                    |                        |
+| • Drag-and-drop task re-ordering                |                                                    |                        |
+| • Dark/Light toggle                             | • Confetti animation when tasks complete           |                        |
+| **Meta**                                        | • Hosted automatically on Replit with a public URL |                        |
+| • `.env` handling for secrets                   |                                                    |                        |
+| • Clear `README.md` with run-local instructions | • GitHub Actions CI for lint + test                |                        |
+
+---
+
+#### 2. Suggested Tech Stack
+
+* **Frontend:** React + Vite, Tailwind CSS, Zustand (state)
+* **Backend:** Node.js + Express *(or Fastify)*
+* **DB:** Prisma ORM → Postgres (free tier)
+* **Real-time:** Socket.IO
+* **Auth:** JSON Web Tokens, bcrypt for hashing
+* **Deployment:** Replit “Deployments” (one-click)
+
+*(Swap any pieces if the generator prefers another stack, but keep real-time, auth, DB.)*
+
+---
+
+#### 3. Detailed Feature Checklist
+
+1. **Authentication & Multi-User**
+
+   * Sign-up, login, password reset (email link OK).
+   * Role: *Admin* vs *Member* (Admin can invite/delete users).
+
+2. **Task Model**
+
+   ```json
+   {
+     "id": "uuid",
+     "title": "string (required, ≤120 chars)",
+     "description": "string",
+     "priority": "LOW | MEDIUM | HIGH | CRITICAL",
+     "color": "#hex",          // auto-mapped from priority
+     "status": "TODO | IN_PROGRESS | DONE",
+     "assigneeId": "user-id",
+     "creatorId": "user-id",
+     "dueDate": "ISO8601",
+     "tags": ["react", "finance"],
+     "createdAt": "ISO8601",
+     "updatedAt": "ISO8601"
+   }
+   ```
+
+3. **API Endpoints**
+
+   * `POST /api/auth/register | login | refresh`
+   * `GET /api/tasks?filter=...` *(paginate & search)*
+   * `POST /api/tasks` (JSON body same as model)
+   * `PATCH /api/tasks/:id`
+   * `DELETE /api/tasks/:id`
+   * Socket.IO emits: `taskCreated`, `taskUpdated`, `taskDeleted`.
+
+4. **User Interface**
+
+   * **Dashboard landing:** horizontal “Today, Upcoming, Overdue” cards.
+   * **Kanban:** columns = status; drag → updates status via API.
+   * **List view:** sortable by priority, due date.
+   * **Color legend** tucked in sidebar.
+   * Floating action button ➜ modal for quick task entry.
+   * Priority picker = emoji + color chip (🔥 Critical, 🟠 High, 🟡 Medium, 🟢 Low).
+   * Profile menu ➜ theme switch, logout, personal stats.
+   * Slick micro-interactions (Framer Motion): card hover lift, completed-task confetti.
+
+5. **Creative Extras**
+
+   * **Natural-language quick add**: “/quick *Buy milk tomorrow 5 pm @Muheez #personal*” → parser fills fields.
+   * **Productivity heat-map** on profile: tasks done per day (GitHub-style).
+   * Weekly summary email (cron) with pending tasks.
+
+---
+
+#### 4. Non-Functional Requirements
+
+* **Code Quality:** ESLint, Prettier, commit hooks (Husky).
+* **Testing:** Jest + React Testing Library; supertest for API.
+* **Security:** Helmet, rate-limiter, xss-clean.
+* **Docs:** OpenAPI (Swagger) auto-generated, stored at `/docs`.
+* **Accessibility:** WCAG AA colors, keyboard navigation, aria-labels.
+* **Performance:** Lighthouse score ≥ 90 on desktop & mobile.
+
+---
+
+#### 5. Deployment Instructions (Replit)
+
+1. Auto-install Nix packages if needed (`replit.nix`).
+2. Use Replit “Secrets” for `DATABASE_URL`, `JWT_SECRET`.
+3. On first run, migrate DB (`npx prisma migrate deploy`).
+4. Add `start` script: `concurrently "npm run dev" "npm run dev:client"`.
+5. Configure Replit **Deployments → web service** on port `3000`.
+6. Verify public URL shares the React build.
+
+---
+
+#### 6. Deliverables
+
+* `README.md` with: quick start, feature GIFs, API docs link.
+* Full source code pushed to the Replit workspace.
+* Live URL + login seeded with demo credentials:
+
+  * **Admin:** `admin@innofy.ai` / `Admin123!`
+  * **Member:** `demo@innofy.ai` / `Demo123!`
+
+---
+
+> **End of Prompt** – Please generate all required files, folders, environment setup, and deployment steps. Ensure the final app is running live with the above capabilities, a captivating UI, and clean, maintainable code. Thank you!
+
+---
+
+### 🔧 Prompt Ends Here
+
+Copy everything between the **Prompt Starts** and **Prompt Ends** markers into your AI-code generator.
+Happy building! 🎉
