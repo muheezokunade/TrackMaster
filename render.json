@@ -1,0 +1,41 @@
+{
+  "services": [
+    {
+      "type": "web",
+      "name": "trackmaster-api",
+      "runtime": "node",
+      "plan": "free",
+      "buildCommand": "npm install && npm run build",
+      "startCommand": "npm start",
+      "nodeVersion": "20.x",
+      "envVars": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "DATABASE_URL",
+          "sync": false
+        },
+        {
+          "key": "SESSION_SECRET",
+          "sync": false
+        },
+        {
+          "key": "RESEND_API_KEY",
+          "sync": false
+        },
+        {
+          "key": "MAIL_FROM",
+          "sync": false
+        },
+        {
+          "key": "PORT",
+          "value": "3000"
+        }
+      ],
+      "healthCheckPath": "/api/health",
+      "autoDeploy": true
+    }
+  ]
+} 
