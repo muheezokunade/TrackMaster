@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Moon, Sun, Rocket } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -16,6 +17,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +40,9 @@ export default function Login() {
       const data = await response.json();
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      
+      // Invalidate auth query to refresh user state
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       
       toast({
         title: "Success",

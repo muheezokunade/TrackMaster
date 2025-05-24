@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -5,6 +6,14 @@ import { setupVite, serveStatic, log } from "./vite";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add CORS headers for development
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -47,24 +56,45 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+  const port = process.env.PORT || 3000;
+  
+  // Handle server cleanup and port conflicts
+  const startServer = () => {
+    server.listen(port, () => {
+      log(`serving on port ${port}`);
+    }).on('error', (error: any) => {
+      if (error.code === 'EADDRINUSE') {
+        log(`Port ${port} is busy, trying to close existing connections...`);
+        require('child_process').exec(`lsof -i :${port} | grep LISTEN | awk '{print $2}' | xargs kill -9`, (err: any) => {
+          if (err) {
+            log(`Failed to kill process on port ${port}. Please close it manually.`);
+            process.exit(1);
+          } else {
+            log(`Successfully killed process on port ${port}, restarting server...`);
+            setTimeout(startServer, 1000);
+          }
+        });
+      } else {
+        log(`Failed to start server: ${error.message}`);
+        process.exit(1);
+      }
+    });
+  };
+
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    log('SIGTERM signal received: closing HTTP server');
+    server.close(() => {
+      log('HTTP server closed');
+      process.exit(0);
+    });
   });
+
+  startServer();
 })();

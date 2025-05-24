@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { KanbanBoard } from "@/components/kanban-board";
 import { TaskModal } from "@/components/task-modal";
@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { useTasks } from "@/hooks/use-tasks";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "@/components/theme-provider";
 import { 
   Search, 
@@ -21,29 +20,18 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
-  Users,
-  MessageSquare,
-  ArrowRight
+  Users
 } from "lucide-react";
+import { InviteMemberModal } from "@/components/invite-member-modal";
 
-export default function Dashboard() {
+const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [isAddingMember, setIsAddingMember] = useState(false);
   const { user, logout } = useAuth();
   const { tasks, isLoading: tasksLoading } = useTasks();
   const { theme, toggleTheme } = useTheme();
-
-  // Listen for task modal events from kanban board
-  useEffect(() => {
-    const handleOpenTaskModal = () => setTaskModalOpen(true);
-    window.addEventListener('openTaskModal', handleOpenTaskModal);
-    return () => window.removeEventListener('openTaskModal', handleOpenTaskModal);
-  }, []);
-
-  const { data: stats } = useQuery({
-    queryKey: ["/api/tasks/stats"],
-    enabled: !!user,
-  });
+  const queryClient = useQueryClient();
 
   const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/users"],
@@ -65,6 +53,10 @@ export default function Dashboard() {
 
   const inProgressTasks = tasks?.filter(task => task.status === 'IN_PROGRESS') || [];
   const completedTasks = tasks?.filter(task => task.status === 'DONE') || [];
+
+  const handleInviteSent = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/invitations/pending"] });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-purple-900 dark:to-indigo-950">
@@ -240,11 +232,12 @@ export default function Dashboard() {
                       Create New Task
                     </Button>
                     <Button
+                      onClick={() => setIsAddingMember(true)}
                       variant="outline"
-                      className="w-full glassmorphism border-gray-200/50 dark:border-gray-700/50"
+                      className="w-full glassmorphism border-gray-200/50 dark:border-gray-700/50 hover:bg-primary/10"
                     >
                       <Users className="w-4 h-4 mr-2" />
-                      Invite Team Member
+                      Invite Teammates
                     </Button>
                     <Button
                       variant="outline"
@@ -293,7 +286,7 @@ export default function Dashboard() {
                     Recent Activity
                   </h3>
                   <div className="space-y-4">
-                    {tasks?.slice(0, 4).map((task, index) => (
+                    {tasks?.slice(0, 4).map((task) => (
                       <div key={task.id} className="flex items-start space-x-3">
                         <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                           {task.status === 'DONE' ? (
@@ -339,6 +332,14 @@ export default function Dashboard() {
         onClose={() => setTaskModalOpen(false)}
         users={users}
       />
+
+      <InviteMemberModal 
+        isOpen={isAddingMember} 
+        onClose={() => setIsAddingMember(false)}
+        onInviteSent={handleInviteSent}
+      />
     </div>
   );
 }
+
+export default Dashboard;

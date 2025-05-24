@@ -7,11 +7,13 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/use-auth";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import AcceptInvite from "@/pages/accept-invite";
 import Dashboard from "@/pages/dashboard";
 import Tasks from "@/pages/tasks";
 import Kanban from "@/pages/kanban";
 import Calendar from "@/pages/calendar";
 import Team from "@/pages/team";
+import Settings from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
 function AuthenticatedApp() {
@@ -23,6 +25,7 @@ function AuthenticatedApp() {
       <Route path="/kanban" component={Kanban} />
       <Route path="/calendar" component={Calendar} />
       <Route path="/team" component={Team} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -34,6 +37,7 @@ function UnauthenticatedApp() {
       <Route path="/" component={Login} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/accept-invite/:token" component={AcceptInvite} />
       <Route component={Login} />
     </Switch>
   );

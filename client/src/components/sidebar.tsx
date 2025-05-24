@@ -122,10 +122,12 @@ export function Sidebar({ isOpen, onClose, user, onLogout }: SidebarProps) {
             </div>
           </div>
           <div className="flex space-x-2">
-            <Button variant="ghost" size="sm" className="flex-1">
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
-            </Button>
+            <Link href="/settings">
+              <Button variant="ghost" size="sm" className="flex-1">
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </Button>
+            </Link>
             <Button variant="ghost" size="sm" onClick={onLogout}>
               <LogOut className="w-4 h-4" />
             </Button>

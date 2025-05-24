@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model Team {
+  id        String       @id @default(cuid())
+  name      String
+  ownerId   String
+  owner     User        @relation("TeamOwner", fields: [ownerId], references: [id])
+  members   Membership[]
+  createdAt DateTime    @default(now())
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String       @unique
+  firstName     String?
+  lastName      String?
+  name          String?      // Legacy field, can be removed after migration
+  password      String
+  memberships   Membership[]
+  ownedTeams    Team[]      @relation("TeamOwner")
+  role          Role        @default(MEMBER)
+  createdAt     DateTime    @default(now())
+  createdTasks  Task[]      @relation("CreatedTasks")
+  assignedTasks Task[]      @relation("AssignedTasks")
+}
+
+model Task {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+  creatorId   String
+  creator     User         @relation("CreatedTasks", fields: [creatorId], references: [id])
+  assigneeId  String?
+  assignee    User?        @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Membership {
+  id      String @id @default(cuid())
+  userId  String
+  teamId  String
+  role    Role   @default(MEMBER)  // local (per-team) role
+  user    User   @relation(fields: [userId], references: [id])
+  team    Team   @relation(fields: [teamId], references: [id])
+
+  @@unique([userId, teamId])       // no duplicate membership
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  email     String
+  role      Role     @default(MEMBER)
+  token     String   @unique
+  teamId    String
+  inviterId String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+} 

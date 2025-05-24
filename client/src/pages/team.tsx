@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { useTasks } from "@/hooks/use-tasks";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "@/components/theme-provider";
 import { 
   Menu, 
@@ -17,14 +17,43 @@ import {
   Calendar,
   CheckSquare,
   Clock,
-  Award
+  Award,
+  UserPlus,
+  Plus
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InviteMemberModal } from "@/components/invite-member-modal";
+import { TaskModal } from "@/components/task-modal";
+import { PendingInvitations } from "@/components/pending-invitations";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Team() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAddingMember, setIsAddingMember] = useState(false);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newUser, setNewUser] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    firstName: "",
+    lastName: "",
+    role: "member"
+  });
   const { user, logout } = useAuth();
   const { tasks } = useTasks();
   const { theme, toggleTheme } = useTheme();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Listen for task modal events
+  useEffect(() => {
+    const handleOpenTaskModal = () => setTaskModalOpen(true);
+    window.addEventListener('openTaskModal', handleOpenTaskModal);
+    return () => window.removeEventListener('openTaskModal', handleOpenTaskModal);
+  }, []);
 
   const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/users"],
@@ -32,6 +61,75 @@ export default function Team() {
   });
 
   if (!user) return null;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewUser(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleRoleChange = (value: string) => {
+    setNewUser(prev => ({ ...prev, role: value }));
+  };
+
+  const handleAddMember = async () => {
+    if (
+      !newUser.username ||
+      !newUser.email ||
+      !newUser.password ||
+      !newUser.confirmPassword ||
+      !newUser.firstName ||
+      !newUser.lastName
+    ) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newUser.password !== newUser.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords don't match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await apiRequest("POST", "/api/auth/register", newUser);
+      
+      toast({
+        title: "Success",
+        description: "Team member added successfully",
+      });
+      
+      // Reset form and close dialog
+      setNewUser({
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        firstName: "",
+        lastName: "",
+        role: "member"
+      });
+      setIsAddingMember(false);
+      
+      // Refresh users list
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add team member",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const getUserStats = (userId: number) => {
     const userTasks = tasks?.filter(task => task.assigneeId === userId || task.creatorId === userId) || [];
@@ -52,6 +150,10 @@ export default function Team() {
     return role === 'admin' 
       ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400'
       : 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+  };
+
+  const handleInviteSent = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/invitations/pending"] });
   };
 
   return (
@@ -92,6 +194,15 @@ export default function Team() {
           </div>
 
           <div className="flex items-center space-x-4">
+            {user.role === 'admin' && (
+              <Button
+                onClick={() => setIsAddingMember(true)}
+                className="bg-gradient-to-r from-primary to-secondary hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Invite Member
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
               {theme === "dark" ? (
                 <Sun className="h-5 w-5" />
@@ -103,111 +214,155 @@ export default function Team() {
         </header>
 
         <main className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {users.map((member: any) => {
-              const stats = getUserStats(member.id);
-              return (
-                <Card key={member.id} className="glassmorphism hover:shadow-lg transition-all duration-300">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center space-x-4">
-                      <Avatar className="h-16 w-16">
-                        <AvatarFallback className="text-lg bg-gradient-to-br from-primary to-secondary text-white">
-                          {member.firstName?.[0]}{member.lastName?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            {member.firstName} {member.lastName}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Team Members List */}
+            <div className="lg:col-span-2">
+              <Tabs defaultValue="members" className="space-y-6">
+                <TabsList className="grid w-full max-w-md grid-cols-2 mx-auto mb-6">
+                  <TabsTrigger value="members">Team Members</TabsTrigger>
+                  {user.role === 'admin' && (
+                    <TabsTrigger value="invitations">Pending Invitations</TabsTrigger>
+                  )}
+                </TabsList>
+                
+                <TabsContent value="members" className="space-y-6">
+                  <div className="grid grid-cols-1 gap-6">
+                    {users.map((member: any) => {
+                      const stats = getUserStats(member.id);
+                      return (
+                        <Card key={member.id} className="glassmorphism hover:shadow-lg transition-all duration-300">
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start space-x-4">
+                                <Avatar className="h-12 w-12">
+                                  <AvatarFallback className="bg-primary/10 text-primary">
+                                    {member.firstName?.[0]}{member.lastName?.[0]}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="flex items-center space-x-2">
+                                    <h3 className="text-lg font-semibold">
+                                      {member.firstName} {member.lastName}
+                                    </h3>
+                                    <Badge className={getRoleColor(member.role)}>
+                                      {member.role}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-gray-500">@{member.username}</p>
+                                  <p className="text-sm text-gray-500">{member.email}</p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-4 grid grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <p className="text-sm text-gray-500">Assigned Tasks</p>
+                                <p className="text-2xl font-semibold">{stats.assigned}</p>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-sm text-gray-500">Completed</p>
+                                <p className="text-2xl font-semibold">{stats.completed}</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+
+                    {users.length === 0 && (
+                      <Card className="glassmorphism">
+                        <CardContent className="flex flex-col items-center justify-center py-12">
+                          <Users className="w-16 h-16 text-gray-400 mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                            No team members yet
                           </h3>
-                          <Badge className={getRoleColor(member.role)}>
-                            {member.role}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          @{member.username}
-                        </p>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Mail className="w-4 h-4" />
-                      <span>{member.email}</span>
-                    </div>
-
-                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                      <Calendar className="w-4 h-4" />
-                      <span>Joined {new Date(member.createdAt).toLocaleDateString()}</span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
-                      <div className="text-center">
-                        <div className="flex items-center justify-center space-x-1 mb-1">
-                          <CheckSquare className="w-4 h-4 text-blue-500" />
-                          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                            {stats.assigned}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Assigned</p>
-                      </div>
-
-                      <div className="text-center">
-                        <div className="flex items-center justify-center space-x-1 mb-1">
-                          <Clock className="w-4 h-4 text-green-500" />
-                          <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                            {stats.completed}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Completed</p>
-                      </div>
-                    </div>
-
-                    {stats.assigned > 0 && (
-                      <div className="pt-2">
-                        <div className="flex items-center justify-between text-sm mb-2">
-                          <span className="text-gray-600 dark:text-gray-400">Completion Rate</span>
-                          <span className="font-medium text-gray-900 dark:text-gray-100">
-                            {stats.completionRate}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div
-                            className="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${stats.completionRate}%` }}
-                          />
-                        </div>
-                      </div>
+                          <p className="text-gray-500 dark:text-gray-400 text-center">
+                            Invite team members to start collaborating on tasks.
+                          </p>
+                          {user.role === 'admin' && (
+                            <Button 
+                              className="mt-4"
+                              onClick={() => setIsAddingMember(true)}
+                            >
+                              <UserPlus className="h-4 w-4 mr-2" />
+                              Invite Member
+                            </Button>
+                          )}
+                        </CardContent>
+                      </Card>
                     )}
+                  </div>
+                </TabsContent>
+                
+                {user.role === 'admin' && (
+                  <TabsContent value="invitations">
+                    <PendingInvitations />
+                  </TabsContent>
+                )}
+              </Tabs>
+            </div>
 
-                    {stats.completionRate >= 80 && stats.assigned > 0 && (
-                      <div className="flex items-center space-x-2 text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-2 rounded-lg">
-                        <Award className="w-4 h-4" />
-                        <span>Top Performer!</span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+            {/* Quick Actions */}
+            <div className="space-y-6">
+              <Card className="glassmorphism">
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {user.role === 'admin' && (
+                    <Button
+                      className="w-full justify-start"
+                      onClick={() => setIsAddingMember(true)}
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Invite Team Member
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => window.dispatchEvent(new Event('openTaskModal'))}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create New Task
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Team Stats */}
+              <Card className="glassmorphism">
+                <CardHeader>
+                  <CardTitle>Team Stats</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500">Total Members</p>
+                      <p className="text-2xl font-semibold">{users.length}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500">Total Tasks</p>
+                      <p className="text-2xl font-semibold">{tasks?.length || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-
-          {users.length === 0 && (
-            <Card className="glassmorphism">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Users className="w-16 h-16 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  No team members yet
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 text-center">
-                  Invite team members to start collaborating on tasks.
-                </p>
-              </CardContent>
-            </Card>
-          )}
         </main>
       </div>
+
+      <InviteMemberModal 
+        isOpen={isAddingMember} 
+        onClose={() => setIsAddingMember(false)}
+        onInviteSent={handleInviteSent}
+      />
+
+      <TaskModal
+        open={taskModalOpen}
+        onClose={() => setTaskModalOpen(false)}
+        users={users}
+      />
     </div>
   );
 }

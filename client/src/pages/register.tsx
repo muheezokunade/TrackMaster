@@ -14,13 +14,11 @@ export default function Register() {
   const [, setLocation] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    username: "",
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "member" as "admin" | "member",
+    role: "MEMBER" as "ADMIN" | "MEMBER",
   });
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
@@ -32,7 +30,7 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.firstName || !formData.lastName || !formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -108,38 +106,13 @@ export default function Register() {
 
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  placeholder="John"
-                  value={formData.firstName}
-                  onChange={(e) => handleChange("firstName", e.target.value)}
-                  disabled={isLoading}
-                  className="bg-white/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/50"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  placeholder="Doe"
-                  value={formData.lastName}
-                  onChange={(e) => handleChange("lastName", e.target.value)}
-                  disabled={isLoading}
-                  className="bg-white/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/50"
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="name">Name</Label>
               <Input
-                id="username"
-                placeholder="johndoe"
-                value={formData.username}
-                onChange={(e) => handleChange("username", e.target.value)}
+                id="name"
+                placeholder="John Doe"
+                value={formData.name}
+                onChange={(e) => handleChange("name", e.target.value)}
                 disabled={isLoading}
                 className="bg-white/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/50"
               />
@@ -160,13 +133,13 @@ export default function Register() {
 
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Select value={formData.role} onValueChange={(value) => handleChange("role", value)}>
+              <Select value={formData.role} onValueChange={(value) => handleChange("role", value as "ADMIN" | "MEMBER")}>
                 <SelectTrigger className="bg-white/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/50">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="MEMBER">Member</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>

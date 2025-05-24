@@ -1,4 +1,8 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.PROD ? 'https://trackmaster-api.onrender.com' : 'http://localhost:3000');
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -7,32 +11,27 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  const token = localStorage.getItem("token");
-  const headers: Record<string, string> = {};
+export const apiRequest = async (method: string, endpoint: string, data?: any) => {
+  const token = localStorage.getItem('token');
   
-  if (data) {
-    headers["Content-Type"] = "application/json";
+  try {
+    const response = await axios({
+      method,
+      url: `${API_URL}${endpoint}`,
+      data,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` })
+      }
+    });
+    return response;
+  } catch (error: any) {
+    if (error.response) {
+      throw new Error(error.response.data.message || 'An error occurred');
+    }
+    throw error;
   }
-  
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return res;
-}
+};
 
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {

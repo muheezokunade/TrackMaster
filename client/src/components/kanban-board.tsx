@@ -6,6 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TaskCard } from "./task-card";
 import { Plus, Filter } from "lucide-react";
 import type { TaskWithUsers } from "@shared/schema";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface KanbanBoardProps {
   tasks: TaskWithUsers[];
@@ -17,6 +20,30 @@ export function KanbanBoard({ tasks, isLoading }: KanbanBoardProps) {
   const [filterPriority, setFilterPriority] = useState<string>("all");
   const [filterAssignee, setFilterAssignee] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const response = await apiRequest("PATCH", `/api/tasks/${id}`, { status });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks/stats"] });
+      toast({
+        title: "Success",
+        description: "Task status updated successfully!",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update task status",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Filter tasks based on selected filters
   const filteredTasks = tasks.filter(task => {
@@ -70,9 +97,7 @@ export function KanbanBoard({ tasks, isLoading }: KanbanBoardProps) {
   const handleDrop = (e: React.DragEvent, newStatus: string) => {
     e.preventDefault();
     if (draggedTask && draggedTask.status !== newStatus) {
-      // Here you would call the API to update the task status
-      console.log(`Moving task ${draggedTask.id} to ${newStatus}`);
-      // updateTask(draggedTask.id, { status: newStatus });
+      updateTaskMutation.mutate({ id: draggedTask.id, status: newStatus });
     }
     setDraggedTask(null);
   };
