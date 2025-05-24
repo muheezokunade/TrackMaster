@@ -1,0 +1,9 @@
+.git
+.gitignore
+.env
+.env.*
+node_modules
+*.log
+.DS_Store
+go.mod
+go.sum 
