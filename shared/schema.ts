@@ -1,6 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "member"]);
@@ -243,3 +242,33 @@ export type TaskWithUsers = {
     email: string;
   } | null;
 };
+
+export const signUpSchema = z.object({
+  username: z.string().min(3).max(20),
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export const signInSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export const taskSchema = z.object({
+  title: z.string().min(3).max(100),
+  description: z.string().optional(),
+  dueDate: z.string().optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
+  status: z.enum(["TODO", "IN_PROGRESS", "DONE"]),
+  assignedTo: z.string().optional(),
+});
+
+export const invitationSchema = z.object({
+  email: z.string().email(),
+  role: z.enum(["ADMIN", "MEMBER"]),
+});
+
+export type SignUpInput = z.infer<typeof signUpSchema>;
+export type SignInInput = z.infer<typeof signInSchema>;
+export type TaskInput = z.infer<typeof taskSchema>;
+export type InvitationInput = z.infer<typeof invitationSchema>;

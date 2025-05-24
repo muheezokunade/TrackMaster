@@ -20,7 +20,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InviteMemberModal } from "@/components/invite-member-modal";
 import { TaskModal } from "@/components/task-modal";
 import { PendingInvitations } from "@/components/pending-invitations";
-import { useToast } from "@/hooks/use-toast";
 
 export default function Team() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -29,7 +28,6 @@ export default function Team() {
   const { user, logout } = useAuth();
   const { tasks } = useTasks();
   const { theme, toggleTheme } = useTheme();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Listen for task modal events
