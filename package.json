@@ -9,9 +9,8 @@
   },
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "prisma generate && tsc -p tsconfig.build.json && cd client && npm install && npm run build",
-    "start": "NODE_ENV=production node dist/server/index.js",
-    "postinstall": "prisma generate"
+    "build": "npx prisma generate && tsc -p tsconfig.build.json && cd client && npm install && npm run build",
+    "start": "NODE_ENV=production node dist/server/index.js"
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",
