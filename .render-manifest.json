@@ -1,0 +1,11 @@
+{
+  "type": "node",
+  "env": "node",
+  "buildCommand": "./build.sh",
+  "startCommand": "./start.sh",
+  "healthCheckPath": "/api/health",
+  "envVars": {
+    "NODE_ENV": "production",
+    "PORT": "3000"
+  }
+} 

@@ -1,3 +1,4 @@
+# Go files
 **/*.go
 go.mod
 go.sum
@@ -5,10 +6,23 @@ go.sum
 *.test
 *.prof
 vendor/
+pkg/
+bin/
+
+# Version control
 .git/
 .gitignore
+
+# Environment
 .env
 .env.*
+
+# Dependencies
 node_modules/
+
+# Logs and system files
 *.log
-.DS_Store 
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log* 
