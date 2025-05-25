@@ -5,7 +5,20 @@
       "destination": "/index.html"
     }
   ],
+  "routes": [
+    {
+      "src": "/[^.]+",
+      "dest": "/",
+      "status": 200
+    }
+  ],
   "env": {
     "VITE_API_URL": "https://trackmaster-cb3k.onrender.com"
+  },
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "github": {
+    "silent": true
   }
 } 
