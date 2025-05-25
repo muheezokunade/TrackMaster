@@ -19,14 +19,39 @@ export const apiRequest = async (method: string, endpoint: string, data?: any) =
       url: `${BASE_URL}${endpoint}`,
       data,
       headers: {
-        Authorization: token ? `Bearer ${token}` : "",
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : "",
       },
+      timeout: 10000,
+      validateStatus: (status) => status < 500,
+      withCredentials: true,
     });
     
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+      throw new Error("Session expired. Please login again.");
+    }
+
     return response;
   } catch (error: any) {
-    if (error.response?.data?.message) {
-      throw new Error(error.response.data.message);
+    if (axios.isAxiosError(error)) {
+      if (error.code === "ECONNABORTED") {
+        throw new Error("Connection timeout. Please try again.");
+      }
+      if (!error.response) {
+        throw new Error("Network error. Please check your connection.");
+      }
+      if (error.response.status === 404) {
+        throw new Error("The requested resource was not found.");
+      }
+      if (error.response.status === 403) {
+        throw new Error("You don't have permission to access this resource.");
+      }
+      if (error.response.data?.message) {
+        throw new Error(error.response.data.message);
+      }
     }
     throw error;
   }
@@ -39,23 +64,40 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const token = localStorage.getItem("token");
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
     
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const res = await fetch(queryKey[0] as string, {
-      headers,
-      credentials: "include",
-    });
+    try {
+      const res = await fetch(queryKey[0] as string, {
+        headers,
+        credentials: 'include',
+        mode: 'cors',
+      });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
+
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        throw new Error("Session expired. Please login again.");
+      }
+
+      await throwIfResNotOk(res);
+      return await res.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        throw new Error("Network error. Please check your connection.");
+      }
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({
@@ -65,10 +107,10 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
-      retry: false,
+      retry: 1,
     },
     mutations: {
-      retry: false,
+      retry: 1,
     },
   },
 });
